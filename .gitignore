@@ -1,0 +1,11 @@
+/lib/
+/doc/
+/dataset/
+/.settings/
+
+*.*~
+.project
+.classpath
+*.jar
+/target/
+dependency-reduced-pom.xml
