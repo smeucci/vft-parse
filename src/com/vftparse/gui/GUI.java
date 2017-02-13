@@ -23,8 +23,9 @@ import static com.vftparse.core.VFT.*;
 public class GUI extends JPanel {
 	
 	private static final long serialVersionUID = 1L;
-	public String inputFile;
+	public String input;
 	public String outputFolder;
+	public boolean isFolder;
 	
 	public GUI() {
 		add(createContent());
@@ -40,36 +41,46 @@ public class GUI extends JPanel {
 	    layout.setAutoCreateGaps( true );
 	
 	    // Create the components we will put in the form
+	    JLabel parseLabel = new JLabel();
+	    JButton parseButton = new JButton("Parse");
+	    parseButton.addActionListener(new Parse(parseLabel));
+	    
 	    JLabel inputFileLabel = new JLabel( "Input File:" );
 	    JTextField inputFileTextField = new JTextField( 20 );
 	    inputFileTextField.setEditable(false);
-	    JButton openFileButton = new JButton("Select File");
-	    openFileButton.addActionListener(new OpenFileChooser(inputFileTextField));
+	    JButton inputFileButton = new JButton("Select File");
+	    
+	    JLabel inputFolderLabel = new JLabel( "Input Folder:" );
+	    JTextField inputFolderTextField = new JTextField( 20 );
+	    inputFolderTextField.setEditable(false);
+	    JButton inputFolderButton = new JButton("Select Folder");
+	    
+	    inputFileButton.addActionListener(new InputFileChooser(inputFileTextField, inputFolderTextField, parseLabel));
+	    inputFolderButton.addActionListener(new InputFolderChooser(inputFolderTextField, inputFileTextField, parseLabel));
 	    
 	    JLabel outputFolderLabel = new JLabel( "Output Folder:" );
 	    JTextField outputFolderTextField = new JTextField( 20 );
 	    outputFolderTextField.setEditable(false);
-	    JButton openFolderButton = new JButton("Select Folder");
-	    openFolderButton.addActionListener(new OpenFolderChooser(outputFolderTextField));
-	    
-	    JLabel parseLabel = new JLabel();
-	    JButton parse = new JButton("Parse");
-	    parse.addActionListener(new Parse(parseLabel));
+	    JButton outputFolderButton = new JButton("Select Folder");
+	    outputFolderButton.addActionListener(new OutputFolderChooser(outputFolderTextField, parseLabel));
 	
 	    // Horizontally, we want to align the labels and the text fields
 	    // along the left (LEADING) edge
 	    layout.setHorizontalGroup( layout.createSequentialGroup()
 	    		.addGroup( layout.createParallelGroup( GroupLayout.Alignment.LEADING )
                         .addComponent( inputFileLabel )
+                        .addComponent( inputFolderLabel )
                         .addComponent( outputFolderLabel ))
                 .addGroup( layout.createParallelGroup( GroupLayout.Alignment.LEADING )
                         .addComponent( inputFileTextField )
+                        .addComponent( inputFolderTextField )
                         .addComponent( outputFolderTextField )
                         .addComponent( parseLabel ))
                 .addGroup( layout.createParallelGroup( GroupLayout.Alignment.LEADING )
-                        .addComponent( openFileButton )
-                        .addComponent( openFolderButton )
-                        .addComponent( parse ) )
+                        .addComponent( inputFileButton )
+                        .addComponent( inputFolderButton )
+                        .addComponent( outputFolderButton )
+                        .addComponent( parseButton ) )
 	    );
 	
 	    // Vertically, we want to align each label with his textfield
@@ -78,49 +89,92 @@ public class GUI extends JPanel {
 	    		.addGroup( layout.createParallelGroup( GroupLayout.Alignment.BASELINE )	    				
                         .addComponent( inputFileLabel )
                         .addComponent( inputFileTextField )
-                        .addComponent( openFileButton ) )
+                        .addComponent( inputFileButton ) )
+                .addGroup( layout.createParallelGroup( GroupLayout.Alignment.BASELINE )	    				
+                        .addComponent( inputFolderLabel )
+                        .addComponent( inputFolderTextField )
+                        .addComponent( inputFolderButton ) )       
                 .addGroup( layout.createParallelGroup( GroupLayout.Alignment.BASELINE )
                         .addComponent( outputFolderLabel )
                         .addComponent( outputFolderTextField )
-                        .addComponent( openFolderButton ) )
+                        .addComponent( outputFolderButton ) )
                 .addGroup( layout.createParallelGroup( GroupLayout.Alignment.BASELINE )
-                        .addComponent( parse )
+                        .addComponent( parseButton )
                         .addComponent( parseLabel ) )
 	    );
 	
 	    return result;
 	}
 	  
-	private class OpenFileChooser implements ActionListener {
-		JTextField field;
+	private class InputFileChooser implements ActionListener {
+		private JTextField field;
+		private JLabel parseLabel;
+		private JTextField inputFolderField;
 		
-		public OpenFileChooser(JTextField field) {
+		public InputFileChooser(JTextField field, JTextField inputFolderField, JLabel parseLabel) {
 			this.field = field;
+			this.parseLabel = parseLabel;
+			this.inputFolderField = inputFolderField;
 		}
 		
 	    public void actionPerformed(ActionEvent e) {
 	    	try {
+	    		parseLabel.setText("");
 	    		JFileChooser fileChooser = new JFileChooser();
 	    		fileChooser.setFileFilter(new TxtFileFilter());
 	    		int n = fileChooser.showOpenDialog(GUI.this);
 	    		if (n == JFileChooser.APPROVE_OPTION) {
 	    			File f = fileChooser.getSelectedFile();
-	    			inputFile = f.getAbsolutePath();
-	    			field.setText(inputFile);
+	    			isFolder = false;
+	    			input = f.getAbsolutePath();
+	    			field.setText(input);
+	    			inputFolderField.setText("");
 	    	    }
 	    	} catch (Exception ex) {}
 	    }
 	}
 	
-	private class OpenFolderChooser implements ActionListener {
-		JTextField field;
+	private class InputFolderChooser implements ActionListener {
+		private JTextField field;
+		private JLabel parseLabel;
+		private JTextField inputFileField;
 		
-		public OpenFolderChooser(JTextField field) {
+		public InputFolderChooser(JTextField field, JTextField inputFileField, JLabel parseLabel) {
 			this.field = field;
+			this.parseLabel = parseLabel;
+			this.inputFileField = inputFileField;
 		}
 		
 	    public void actionPerformed(ActionEvent e) {
 	    	try {
+	    		parseLabel.setText("");
+	    		JFileChooser folderChooser = new JFileChooser();
+	    		folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+	    		folderChooser.setAcceptAllFileFilterUsed(false);
+	    		int n = folderChooser.showOpenDialog(GUI.this);
+	    		if (n == JFileChooser.APPROVE_OPTION) {
+	    			File f = folderChooser.getSelectedFile();
+	    			isFolder = true;
+	    			input = f.getAbsolutePath();
+	    			field.setText(input);
+	    			inputFileField.setText("");
+	    	    }
+	    	} catch (Exception ex) {}
+	    }
+	}
+	
+	private class OutputFolderChooser implements ActionListener {
+		private JTextField field;
+		private JLabel parseLabel;
+		
+		public OutputFolderChooser(JTextField field, JLabel parseLabel) {
+			this.field = field;
+			this.parseLabel = parseLabel;
+		}
+		
+	    public void actionPerformed(ActionEvent e) {
+	    	try {
+	    		parseLabel.setText("");
 	    		JFileChooser folderChooser = new JFileChooser();
 	    		folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 	    		folderChooser.setAcceptAllFileFilterUsed(false);
@@ -143,7 +197,11 @@ public class GUI extends JPanel {
 		
 		public void actionPerformed(ActionEvent e) {
 			try {
-				parse(inputFile, outputFolder);
+				if (isFolder) {
+					batch(input, outputFolder);
+				} else {
+					parse(input, outputFolder);
+				}
 				label.setText("Done.");
 			} catch (Exception e1) {
 				e1.printStackTrace();
@@ -170,7 +228,7 @@ public class GUI extends JPanel {
 	    //frame.pack();
 	    frame.setVisible(true);
 	    frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-	    frame.setSize(new Dimension(500, 150));
+	    frame.setSize(new Dimension(550, 180));
 	    frame.setLocationRelativeTo(null);
 	}
 	
